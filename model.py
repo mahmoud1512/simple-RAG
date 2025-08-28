@@ -1,3 +1,4 @@
+# model.py
 from langchain_core.documents import Document
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -7,27 +8,45 @@ from langchain_community.vectorstores import FAISS
 from langchain.chat_models import init_chat_model
 from langchain_core.prompts import ChatPromptTemplate
 from dotenv import load_dotenv
-class RAG():
+
+class RAG:
     def __init__(self):
         load_dotenv()
-        self.embedder=GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-001")
-        self.vector_store=FAISS.from_documents([],self.embedder)   # need faiss-cpu or faiss-gpu to work
-        self.chat_model=init_chat_model(model="gemini-2.5-flash",model_provider="google_genai")
-        self.query=""
-    def get_pdf(self,path:str):
-        loader=PyPDFLoader(path) # loader to load the pdf text
-        text=loader.load()
-        return text
-    def split_pdf_text_to_chunks(self,pdf_text):
-        splitter=RecursiveCharacterTextSplitter(chunk_size=1000,
-                                                chunk_overlap=100,
-                                                add_start_index=True)
-        chunks=splitter.split_documents(documents=pdf_text)
-        return chunks  # Documents
+        self._embedder = None
+        self.vector_store = None
+        self._chat_model = None
+        self.query = ""
 
+    # lazy embedder factory
+    def _get_embedder(self):
+        if self._embedder is None:
+            self._embedder = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-001")
+        return self._embedder
 
-    def embed_chunks(self,chunks):
-        self.vector_store = FAISS.from_documents(chunks, self.embedder)
+    # lazy chat model factory
+    def _get_chat_model(self):
+        if self._chat_model is None:
+            self._chat_model = init_chat_model(model="gemini-2.5-flash", model_provider="google_genai")
+        return self._chat_model
+
+    def get_pdf(self, path: str):
+        loader = PyPDFLoader(path)
+        return loader.load()
+
+    def split_pdf_text_to_chunks(self, pdf_text):
+        splitter = RecursiveCharacterTextSplitter(
+            chunk_size=1000,
+            chunk_overlap=100,
+            add_start_index=True
+        )
+        return splitter.split_documents(documents=pdf_text)
+
+    def embed_chunks(self, chunks):
+        embedder = self._get_embedder()
+        if not chunks:
+            return
+
+        self.vector_store = FAISS.from_documents(chunks, embedder)
 
     def get_similar_chunks_to_query(self,query):
         self.query=query
@@ -54,6 +73,7 @@ class RAG():
             ("user", user_prompt),
         ]).invoke({"query": self.query, "context": context})
 
-        response = self.chat_model.invoke(final_prompt)
+        chat_model = self._get_chat_model()
+        response = chat_model.invoke(final_prompt)
         return response.content
 

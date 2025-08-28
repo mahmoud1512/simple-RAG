@@ -1,7 +1,18 @@
+
+# gRPC configs
+import asyncio
+import sys
+
+if sys.platform.startswith("win"):
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
 # app.py
 import streamlit as st
 from model import RAG
 import time
+
+
+
 
 # Initialize the RAG model
 rag = RAG()
