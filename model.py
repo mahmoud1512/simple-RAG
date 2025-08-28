@@ -9,10 +9,9 @@ from langchain_core.prompts import ChatPromptTemplate
 from dotenv import load_dotenv
 class RAG():
     def __init__(self):
-        self.text=None
         load_dotenv()
         self.embedder=GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-001")
-        self.vector_store=FAISS(embedding_function=self.embedder,docstore=InMemoryDocstore,index_to_docstore_id={})
+        self.vector_store=FAISS.from_documents([],self.embedder)   # need faiss-cpu or faiss-gpu to work
         self.chat_model=init_chat_model(model="gemini-2.5-flash",model_provider="google_genai")
         self.query=""
     def get_pdf(self,path:str):
@@ -28,27 +27,33 @@ class RAG():
 
 
     def embed_chunks(self,chunks):
-        self.vector_store.add_documents(documents=chunks)
+        self.vector_store = FAISS.from_documents(chunks, self.embedder)
 
     def get_similar_chunks_to_query(self,query):
         self.query=query
         results=self.vector_store.similarity_search(query=query,k=3)
         return results[0:3]
-    def formulate_answer(self,data):
-        system_prompt="""
-        you are a helpful question answering agent that utilizes context data to answer question.
-        if the data are not relevant to query use your own knowledge
+
+    def formulate_answer(self, retrieved_docs):
+        system_prompt = """
+        You are a helpful question answering agent that uses context when possible. 
+        If context is not relevant, use your own knowledge.
         """
 
-        user_prompt="""
-        help me find the answer for {query} 
-        you can utilize this context
-        {data0}
-        {data1}
-        {data2}
+        context = "\n\n".join([doc.page_content for doc in retrieved_docs])
+
+        user_prompt = """
+        Question: {query}
+
+        Context you may use:
+        {context}
         """
 
-        final_prompt_template=ChatPromptTemplate.from_messages([("system",system_prompt),("user",user_prompt)])
-        final_template=final_prompt_template.invoke({"query":f"{self.query}","data0":f"{data[0]}","data1":f"{data[1]}","data2":f"{data[2]}"})
+        final_prompt = ChatPromptTemplate.from_messages([
+            ("system", system_prompt),
+            ("user", user_prompt),
+        ]).invoke({"query": self.query, "context": context})
 
-        return self.chat_model.invoke(final_template).content
+        response = self.chat_model.invoke(final_prompt)
+        return response.content
+
