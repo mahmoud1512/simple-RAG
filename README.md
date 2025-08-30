@@ -1,7 +1,7 @@
-# simple RAG SYSTEM
+# simple RAG system
 
 ## Abstract
-Retrival Augmented generation has become a standard in LLMs world. It allows the model to access a non-parametric memory that helps it to answer the question in a better and task-specific way
+Retrival Augmented generation has become a standard in LLMs world. It allows the model to access a non-parametric memory that helps it to answer the question in a better and task-specific way.
 
 ---
 ## Implementation
@@ -21,6 +21,21 @@ to explore this beautiful world I have made a simple RAG system that
 - python
 - langchain
 - streamlit
+
+---
+## images 
+
+![img.png](img.png)
+
+![img_1.png](img_1.png)
+
+![img_2.png](img_2.png)
+
+![img_3.png](img_3.png)
+
+![img_4.png](img_4.png)
+
+![img_5.png](img_5.png)
 
 ---
 
