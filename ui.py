@@ -1,6 +1,7 @@
 
 import asyncio
 
+# ensuring event loop is there
 loop= asyncio.new_event_loop()
 asyncio.set_event_loop(loop)
 
