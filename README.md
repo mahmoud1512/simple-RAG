@@ -1,7 +1,7 @@
 # simple RAG system
 
 ## Abstract
-Retrival Augmented generation has become a standard in LLMs world. It allows the model to access a non-parametric memory that helps it to answer the question in a better and task-specific way.
+Retrieval Augmented generation has become a standard in LLMs world. It allows the model to access a non-parametric memory that helps it to answer the question in a better and task-specific way.
 
 ---
 ## Implementation
